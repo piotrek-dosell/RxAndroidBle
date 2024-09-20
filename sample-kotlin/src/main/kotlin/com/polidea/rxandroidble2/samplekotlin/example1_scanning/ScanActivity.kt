@@ -70,15 +70,23 @@ class ScanActivity : AppCompatActivity() {
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
             .build()
 
+        val lookFor = "Dosell"
         val scanFilter = ScanFilter.Builder()
-//            .setDeviceAddress("B4:99:4C:34:DC:8B")
-            // add custom filters if needed
+            .setDeviceName(lookFor)
+            //.setServiceUuid(parcelUuid)
             .build()
 
         rxBleClient.scanBleDevices(scanSettings, scanFilter)
             .observeOn(AndroidSchedulers.mainThread())
             .doFinally { dispose() }
-            .subscribe({ resultsAdapter.addScanResult(it) }, { onScanFailure(it) })
+            .subscribe({ scanResult ->
+                scanResult.bleDevice?.name?.takeIf { it.startsWith(lookFor, ignoreCase = true) }?.let {
+                    resultsAdapter.addScanResult(scanResult)
+                    Log.w("scanBleDevices", "DOSELL FOUND !!!!!!!!!!!!!!!!!!!!!!")
+                }
+            }, {
+                onScanFailure(it)
+            })
             .let { scanDisposable = it }
     }
 
